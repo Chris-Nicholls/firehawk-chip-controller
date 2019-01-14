@@ -1,0 +1,16 @@
+pin mapping (closet to end)
+
+LCD-18 
+LCD-15 
+LCD-20
+	XIO-P3
+	XIO-P4
+LCD-14
+LCD-12
+LCD-10
+LCD-13
+LCD-11
+LCD-7
+LCD-5 VIA
+LCD-4 VIA
+LCD-3 VIA
