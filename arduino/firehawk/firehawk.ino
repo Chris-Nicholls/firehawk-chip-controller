@@ -84,7 +84,7 @@ void setLED(struct led led, struct rgb color){
 led led0 = {&red1, &blue1, &green1, &p2};
 led led1 = {&red2, &blue2, &green2, &p1};
 led led2 = {&red1, &blue1, &green1, &p1};
-led led3 = {&red2, &blue2, &green2, &p0;
+led led3 = {&red2, &blue2, &green2, &p0};
 led led4 = {&red1, &blue1, &green1, &p0};
 
 
