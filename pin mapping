@@ -1,16 +1,22 @@
 pin mapping (closet to end)
 
-LCD-18 
-LCD-15 
-LCD-20
-	XIO-P3
-	XIO-P4
-LCD-14
-LCD-12
-LCD-10
-LCD-13
-LCD-11
-LCD-7
-LCD-5 VIA
-LCD-4 VIA
-LCD-3 VIA
+LCD-18  : s0
+LCD-15 	: s1
+LCD-20	: s2
+	XIO-P3 : gpio 3
+	XIO-P4 : gpio 4
+LCD-14 	: blue2
+LCD-12 	: green2
+LCD-10	: red2
+LCD-13	: blue1
+LCD-11	: green1
+LCD-7	: red1
+LCD-5 VIA : p2
+LCD-4 VIA : p1
+LCD-3 VIA : p3
+
+
+
+NOTE:
+The control chain shield uses pins 0,1,2 so there aren't enough left over for us
+However, we can get round this by combining the s and p pins, since we never need to be writing to both at the same time. 
