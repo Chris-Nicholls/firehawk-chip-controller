@@ -28,6 +28,23 @@ cc_actuator_t *getActuatorConfig(){
     return actuator;
 }
 
+int switchState[] = {0,0,0,0,0,0};
+
+void readSwitchState(){
+    digitalWrite(s0, LOW);
+    digitalWrite(s1, HIGH);
+    digitalWrite(s2, HIGH);
+    switchState[5] = 1 - digitalRead(gpio3);
+    switchState[2] = 1 - digitalRead(gpio4);
+    digitalWrite(s0, HIGH);
+    digitalWrite(s1, LOW);
+    switchState[0] = 1 - digitalRead(gpio3);
+    switchState[3] = 1 - digitalRead(gpio4);
+    digitalWrite(s1, HIGH);
+    digitalWrite(s2, LOW);
+    switchState[1] = 1 - digitalRead(gpio3);
+    switchState[4] = 1 - digitalRead(gpio4);
+}
 
 struct rgb{
     bool red;
