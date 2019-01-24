@@ -1,19 +1,19 @@
 pin mapping (closet to end)
 
-LCD-18  : s0
-LCD-15 	: s1
-LCD-20	: s2
-	XIO-P3 : gpio 3
-	XIO-P4 : gpio 4
-LCD-14 	: blue2
-LCD-12 	: green2
-LCD-10	: red2
-LCD-13	: blue1
-LCD-11	: green1
-LCD-7	: red1
-LCD-5 VIA : p2
-LCD-4 VIA : p1
-LCD-3 VIA : p3
+LCD-18  : s0 : 13
+LCD-15 	: s1 : 12
+LCD-20	: s2 : 11
+	XIO-P3 : gpio 3 : 10
+	XIO-P4 : gpio 4 : 9
+LCD-14 	: blue2 : 8
+LCD-12 	: green2 : 7
+LCD-10	: red2 : 6 
+LCD-13	: blue1 : 5
+LCD-11	: green1 : 4
+LCD-7	: red1 : 3
+LCD-5 VIA : p0 : 13
+LCD-4 VIA : p1 : 12
+LCD-3 VIA : p2 : 11
 
 
 
