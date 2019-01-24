@@ -6,7 +6,7 @@ ControlChain cc;
 
 int red1 = 3, green1 = 4, blue1 = 5;
 int red2 = 6, green2 = 7, blue2 = 8; 
-int p0 = 0, p1 = 1, p2 = 2;
+int p0 = 13, p1 = 12, p2 = 11;
 
 int s0 = 13, s1 = 12, s2 = 11;
 
@@ -31,6 +31,7 @@ cc_actuator_t *getActuatorConfig(){
 int switchState[] = {0,0,0,0,0,0};
 
 void readSwitchState(){
+    turnOffAll();
     digitalWrite(s0, LOW);
     digitalWrite(s1, HIGH);
     digitalWrite(s2, HIGH);
@@ -59,33 +60,34 @@ struct led{
     int *power;
 };
 
-void setAllLow(){
-    digitalWrite(p0, LOW);
-    digitalWrite(p1, LOW);
-    digitalWrite(p2, LOW);
+void turnOffAll(){
+    digitalWrite(p0, HIGH);
+    digitalWrite(p1, HIGH);
+    digitalWrite(p2, HIGH);
 
-    digitalWrite(red2, LOW);
-    digitalWrite(green2, LOW);
-    digitalWrite(blue2, LOW);
+    digitalWrite(red2, HIGH);
+    digitalWrite(green2, HIGH);
+    digitalWrite(blue2, HIGH);
 
-    digitalWrite(red1, LOW);
-    digitalWrite(green1, LOW);
-    digitalWrite(blue1, LOW);
+    digitalWrite(red1, HIGH);
+    digitalWrite(green1, HIGH);
+    digitalWrite(blue1, HIGH);
 }
 
 void setLED(struct led led, struct rgb color){
-    setAllLow();
-    digitalWrite(*led.red, color.red);
-    digitalWrite(*led.green, color.green);
-    digitalWrite(*led.blue, color.blue);
-    digitalWrite(*led.power, HIGH);
+    turnOffAll();
+    digitalWrite(*led.red, 1-color.red);
+    digitalWrite(*led.green, 1-color.green);
+    digitalWrite(*led.blue, 1-color.blue);
+    digitalWrite(*led.power, LOW);
+    delay(1);
 }
 
-led led0 = {&red1, &blue1, &green1, &p2};
+led led0 = {&red1, &blue1, &green1, &p0};
 led led1 = {&red2, &blue2, &green2, &p1};
 led led2 = {&red1, &blue1, &green1, &p1};
-led led3 = {&red2, &blue2, &green2, &p0};
-led led4 = {&red1, &blue1, &green1, &p0};
+led led3 = {&red2, &blue2, &green2, &p2};
+led led4 = {&red1, &blue1, &green1, &p2};
 
 
 void setup() {
@@ -114,23 +116,24 @@ void setup() {
     cc_device_t *device = cc.newDevice("Firehawk", uri);
 
     cc_actuator_t* actuator = getActuatorConfig();
-    cc.addActuator(device, actuator);
-    
+    cc.addActuator(device, actuator); 
 }
 
-int states[14];
-int lastSwitch;
+rgb red = rgb{1,0,0};
+rgb blue = rgb{0,0,1};
+rgb green = rgb{0,1,0};
 
 void loop() {
-
-    if (lastSwitch - millis())
-    
-    states[p0] =  HIGH;
-    states[p1] =  LOW;
-    states[p2] =  LOW;
-    states[red1] =  LOW;
-    states[green1] =  HIGH;
-    states[blue1] =  LOW;
-
+    // setLED(led0, red);
+    // setLED(led1, blue);
+    // setLED(led2, blue);
+    // setLED(led3, blue);
+    // setLED(led4, green);
+    turnOffAll();
+    setLED(led0, red);
+    setLED(led1, rgb{1,1,0});
+    setLED(led2, green);
+    setLED(led3, blue);
+    setLED(led4, rgb{1,0,1});
     cc.run();
 }
