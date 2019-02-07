@@ -7,11 +7,11 @@ ControlChain cc;
 
 int red1 = 3, green1 = 4, blue1 = 5;
 int red2 = 6, green2 = 7, blue2 = 8; 
-int p0 = 13, p1 = 12, p2 = 11;
+int p0 = 11, p1 = 12, p2 = 13;
 
 int s0 = 11, s1 = 12, s2 = 13;
 
-int gpio3 = 10, gpio4 = 9;
+int gpio3 = 9, gpio4 = 10;
 
 cc_actuator_t *getActuatorConfig(){
 
@@ -52,14 +52,14 @@ void readSwitchState(){
     digitalWrite(s1, LOW);
     delay(1);
 
-    switchState[0] = 1 - digitalRead(gpio3);
+    switchState[0] = 1- digitalRead(gpio3);
     switchState[3] = 1 - digitalRead(gpio4);
 
     
     digitalWrite(s1, HIGH);
     digitalWrite(s2, LOW);
     delay(1);
-    switchState[1] = 1 - digitalRead(gpio3);
+    switchState[1] = 1- digitalRead(gpio3);
     switchState[4] = 1 - digitalRead(gpio4);
 }
 
@@ -77,9 +77,9 @@ struct led{
 };
 
 void turnOffAll(){
-    digitalWrite(p0, HIGH);
-    digitalWrite(p1, HIGH);
-    digitalWrite(p2, HIGH);
+    digitalWrite(p0, LOW);
+    digitalWrite(p1, LOW);
+    digitalWrite(p2, LOW);
 
     digitalWrite(red2, HIGH);
     digitalWrite(green2, HIGH);
@@ -95,7 +95,7 @@ void setLED(struct led led, struct rgb color){
     digitalWrite(*led.red, 1-color.red);
     digitalWrite(*led.green, 1-color.green);
     digitalWrite(*led.blue, 1-color.blue);
-    digitalWrite(*led.power, LOW);
+    digitalWrite(*led.power, HIGH);
     delay(1);
 }
 
@@ -125,7 +125,7 @@ void setup() {
 
     pinMode(gpio3, INPUT);
     pinMode(gpio4, INPUT);
-
+    analogReference(INTERNAL);
     cc.begin();
 
     const char *uri = "https://github.com/Chris-Nicholls/firehawk-chip-controller";
@@ -148,21 +148,26 @@ rgb off = rgb{0,0,0};
 
 void setLEDS(){
     if (!switchState[5]){
-    setLED(led0, switchState[0]==0? red: green);
-    setLED(led1, switchState[1]==0? blue: green);
-    setLED(led2, switchState[2]==0? yellow: green);
-    setLED(led3, switchState[3]==0? pink: green);
-    setLED(led4, switchState[4]==0? blue: green);
-}
+        setLED(led0, switchState[0]==0? red: green);
+        setLED(led1, switchState[1]==0? blue: green);
+        setLED(led2, switchState[2]==0? yellow: green);
+        setLED(led3, switchState[3]==0? pink: green);
+        setLED(led4, switchState[4]==0? blue: green);
+    }else{
+        setLED(led4, blue);
+    }
 }
 
 
 void loop() {
     readSwitchState();
-    
-    for (int i =0; i < 5; i++){
+        // setLED(led0, red);  
+    // for (int i =0; i < 5; i++){
         setLEDS();
-    }
+    // }
 
-    cc.run();
+    // cc.run();
+    // digitalWrite(s0, HIGH);
+    // digitalWrite(s1, HIGH);
+    // digitalWrite(s2, LOW);
 }
