@@ -2,6 +2,7 @@
 #include <ControlChain.h>
  
 #define SWITCH_DELAY 1
+#define DEBOUNCE_REPEATS 3
 
 ControlChain cc;
 
@@ -13,11 +14,11 @@ int s0 = 11, s1 = 12, s2 = 13;
 
 int gpio3 = 9, gpio4 = 10;
 
-cc_actuator_t *getActuatorConfig(){
+cc_actuator_t *getActuatorConfig(char* name){
 
     cc_actuator_config_t actuator_config;
     actuator_config.type = CC_ACTUATOR_MOMENTARY;
-    actuator_config.name = "PressMe";
+    actuator_config.name = name;
 
     actuator_config.min = 0.0;
     actuator_config.max = 1.0;
@@ -31,36 +32,43 @@ cc_actuator_t *getActuatorConfig(){
 
 int switchState[] = {0,0,0,0,0,0};
 
-void readSwitchState(){
+int debounceTimes[] = {0,0,0,0,0,0};
+
+void readSwitchState(int newState, int* currentState, int* debounceTime){
+    if (newState != *currentState){
+        *debounceTime++;
+    }else{
+        *debounceTime = 0;
+    }
+    if (*debounceTime > DEBOUNCE_REPEATS){
+        *currentState = newState;
+    }
+}
+
+void readSwitchStates(){
     turnOffAll();
-    switchState[0] = 0;
-    switchState[1] = 0;
-    switchState[2] = 0;
-    switchState[3] = 0;
-    switchState[4] = 0;
-    switchState[5] = 0;
 
     digitalWrite(s0, LOW);
     digitalWrite(s1, HIGH);
     digitalWrite(s2, HIGH);
     delay(1);
-    switchState[5] = 1 - digitalRead(gpio3);
-    switchState[2] = 1 - digitalRead(gpio4);
 
+    readSwitchState(1 - digitalRead(gpio3), &switchState[5], &debounceTimes[5]);
+    readSwitchState(1 - digitalRead(gpio4), &switchState[2], &debounceTimes[2]);
 
     digitalWrite(s0, HIGH);
     digitalWrite(s1, LOW);
     delay(1);
 
-    switchState[0] = 1- digitalRead(gpio3);
-    switchState[3] = 1 - digitalRead(gpio4);
-
+    readSwitchState(1 - digitalRead(gpio3), &switchState[0], &debounceTimes[0]);
+    readSwitchState(1 - digitalRead(gpio4), &switchState[3], &debounceTimes[3]);
     
     digitalWrite(s1, HIGH);
     digitalWrite(s2, LOW);
     delay(1);
-    switchState[1] = 1- digitalRead(gpio3);
-    switchState[4] = 1 - digitalRead(gpio4);
+
+    readSwitchState(1 - digitalRead(gpio3), &switchState[1], &debounceTimes[1]);
+    readSwitchState(1 - digitalRead(gpio4), &switchState[4], &debounceTimes[4]);
 }
 
 struct rgb{
@@ -131,7 +139,7 @@ void setup() {
     const char *uri = "https://github.com/Chris-Nicholls/firehawk-chip-controller";
     cc_device_t *device = cc.newDevice("Firehawk", uri);
 
-    cc_actuator_t* actuator = getActuatorConfig();
+    cc_actuator_t* actuator = getActuatorConfig("Button-1");
     cc.addActuator(device, actuator); 
 }
 
@@ -160,14 +168,15 @@ void setLEDS(){
 
 
 void loop() {
-    readSwitchState();
-        // setLED(led0, red);  
-    // for (int i =0; i < 5; i++){
-        setLEDS();
-    // }
+    readSwitchStates();
+    setLEDS();
+    setLEDS();
+    setLEDS();
+    setLEDS();
+    setLEDS();
+    setLEDS();
+    
 
-    // cc.run();
-    // digitalWrite(s0, HIGH);
-    // digitalWrite(s1, HIGH);
-    // digitalWrite(s2, LOW);
+    cc.run();
+    
 }
