@@ -1,8 +1,9 @@
-
-#include <ControlChain.h>
  
 #define SWITCH_DELAY 1
-#define DEBOUNCE_REPEATS 3
+#define DEBOUNCE_REPEATS 1
+
+#include <ControlChain.h>
+
 
 ControlChain cc;
 
@@ -14,7 +15,7 @@ int s0 = 11, s1 = 12, s2 = 13;
 
 int gpio3 = 9, gpio4 = 10;
 
-cc_actuator_t *getActuatorConfig(char* name){
+cc_actuator_t *getActuatorConfig(char* name, float* value){
 
     cc_actuator_config_t actuator_config;
     actuator_config.type = CC_ACTUATOR_MOMENTARY;
@@ -22,6 +23,7 @@ cc_actuator_t *getActuatorConfig(char* name){
 
     actuator_config.min = 0.0;
     actuator_config.max = 1.0;
+    actuator_config.value = value;
     actuator_config.supported_modes = CC_MODE_TOGGLE | CC_MODE_TRIGGER;
     actuator_config.max_assignments = 1;
 
@@ -30,17 +32,17 @@ cc_actuator_t *getActuatorConfig(char* name){
     return actuator;
 }
 
-int switchState[] = {0,0,0,0,0,0};
+float switchState[] = {0,0,0,0,0,0};
 
 int debounceTimes[] = {0,0,0,0,0,0};
 
-void readSwitchState(int newState, int* currentState, int* debounceTime){
+void readSwitchState(float newState, float* currentState, int* debounceTime){
     if (newState != *currentState){
-        *debounceTime++;
+        (*debounceTime)++;
     }else{
         *debounceTime = 0;
     }
-    if (*debounceTime > DEBOUNCE_REPEATS){
+    if (*debounceTime >= DEBOUNCE_REPEATS){
         *currentState = newState;
     }
 }
@@ -115,7 +117,6 @@ led led4 = {&red1, &blue1, &green1, &p2};
 
 
 void setup() {
-    // configure led
     pinMode(red1, OUTPUT);
     pinMode(red2, OUTPUT);
     pinMode(green1, OUTPUT);
@@ -139,8 +140,12 @@ void setup() {
     const char *uri = "https://github.com/Chris-Nicholls/firehawk-chip-controller";
     cc_device_t *device = cc.newDevice("Firehawk", uri);
 
-    cc_actuator_t* actuator = getActuatorConfig("Button-1");
-    cc.addActuator(device, actuator); 
+    cc.addActuator(device, getActuatorConfig("Button-0", &switchState[0])); 
+    cc.addActuator(device, getActuatorConfig("Button-1", &switchState[1])); 
+    cc.addActuator(device, getActuatorConfig("Button-2", &switchState[2])); 
+    cc.addActuator(device, getActuatorConfig("Button-3", &switchState[3])); 
+    cc.addActuator(device, getActuatorConfig("Button-4", &switchState[4])); 
+    cc.addActuator(device, getActuatorConfig("Button-5", &switchState[5])); 
 }
 
 rgb red = rgb{1,0,0};
@@ -170,13 +175,5 @@ void setLEDS(){
 void loop() {
     readSwitchStates();
     setLEDS();
-    setLEDS();
-    setLEDS();
-    setLEDS();
-    setLEDS();
-    setLEDS();
-    
-
-    cc.run();
-    
+    cc.run();    
 }
