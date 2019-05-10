@@ -33,6 +33,7 @@ cc_actuator_t *getActuatorConfig(char* name, float* value){
 }
 
 float switchState[] = {0,0,0,0,0,0};
+float ccState[] = {0,0,0,0,0,0};
 
 int debounceTimes[] = {0,0,0,0,0,0};
 
@@ -135,6 +136,8 @@ void setup() {
     pinMode(gpio3, INPUT);
     pinMode(gpio4, INPUT);
     analogReference(INTERNAL);
+
+    
     cc.begin();
 
     const char *uri = "https://github.com/Chris-Nicholls/firehawk-chip-controller";
@@ -146,6 +149,16 @@ void setup() {
     cc.addActuator(device, getActuatorConfig("Button-3", &switchState[3])); 
     cc.addActuator(device, getActuatorConfig("Button-4", &switchState[4])); 
     cc.addActuator(device, getActuatorConfig("Button-5", &switchState[5])); 
+
+    cc.setEventCallback(CC_EV_UPDATE, updateValues);
+}
+
+void updateValues(cc_assignment_t *assignment){
+  if (! (assignment->mode & CC_MODE_TOGGLE)) return; 
+
+  if (assignment->actuator_id < 6){
+    ccState[assignment->actuator_id] = assignment->value;
+  }
 }
 
 rgb red = rgb{1,0,0};
@@ -159,16 +172,14 @@ rgb off = rgb{0,0,0};
 
 
 
+
+
 void setLEDS(){
-    if (!switchState[5]){
-        setLED(led0, switchState[0]==0? red: green);
-        setLED(led1, switchState[1]==0? blue: green);
-        setLED(led2, switchState[2]==0? yellow: green);
-        setLED(led3, switchState[3]==0? pink: green);
-        setLED(led4, switchState[4]==0? blue: green);
-    }else{
-        setLED(led4, blue);
-    }
+    setLED(led0, ccState[0]==0? blue: green);
+    setLED(led1, ccState[1]==0? blue: red);
+    setLED(led2, ccState[2]==0? blue: yellow);
+    setLED(led3, ccState[3]==0? blue: pink);
+    setLED(led4, ccState[4]==0? blue: cyan);
 }
 
 
