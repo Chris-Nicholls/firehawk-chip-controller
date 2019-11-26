@@ -1,30 +1,53 @@
+#include <actuator.h>
+#include <assignment.h>
+#include <config.h>
+#include <ControlChain.h>
+#include <control_chain.h>
+
  
 #define SWITCH_DELAY 1
 #define DEBOUNCE_REPEATS 1
 
-#include <ControlChain.h>
+#define RED 0b100
+#define BLUE 0b001
+#define GREEN 0b010
+#define YELLOW 0b110
+#define PINK 0b101
+#define CYAN 0b011
+#define OFF 0b000
+
+#define led0 red1, blue1, green1, p0
+#define led1 red2, blue2, green2, p1
+#define led2 red1, blue1, green1, p1
+#define led3 red2, blue2, green2, p2
+#define led4 red1, blue1, green1, p2
 
 
 ControlChain cc;
 
-int red1 = 3, green1 = 4, blue1 = 5;
-int red2 = 6, green2 = 7, blue2 = 8; 
-int p0 = 11, p1 = 12, p2 = 13;
+#define red1 3
+unsigned char green1 = 4, blue1 = 5;
+unsigned char red2 = 6, green2 = 7, blue2 = 8; 
+unsigned char p0 = 11, p1 = 12, p2 = 13;
 
-int s0 = 11, s1 = 12, s2 = 13;
+unsigned char s0 = 11, s1 = 12, s2 = 13;
 
-int gpio3 = 9, gpio4 = 10;
+unsigned char gpio3 = 9, gpio4 = 10;
+
+cc_actuator_config_t actuators[6];
+int acuator_count = 0;
+
 
 cc_actuator_t *getActuatorConfig(char* name, float* value){
-
-    cc_actuator_config_t actuator_config;
+    if (acuator_count > 5) acuator_count = 0;
+    cc_actuator_config_t actuator_config = actuators[acuator_count++];
     actuator_config.type = CC_ACTUATOR_MOMENTARY;
     actuator_config.name = name;
 
     actuator_config.min = 0.0;
     actuator_config.max = 1.0;
     actuator_config.value = value;
-    actuator_config.supported_modes = CC_MODE_TOGGLE | CC_MODE_TRIGGER;
+    actuator_config.supported_modes = CC_MODE_TOGGLE ;
     actuator_config.max_assignments = 1;
 
     cc_actuator_t *actuator;
@@ -35,9 +58,9 @@ cc_actuator_t *getActuatorConfig(char* name, float* value){
 float switchState[] = {0,0,0,0,0,0};
 float ccState[] = {0,0,0,0,0,0};
 
-int debounceTimes[] = {0,0,0,0,0,0};
+char debounceTimes[] = {0,0,0,0,0,0};
 
-void readSwitchState(float newState, float* currentState, int* debounceTime){
+void readSwitchState(float newState, float* currentState, char* debounceTime){
     if (newState != *currentState){
         (*debounceTime)++;
     }else{
@@ -74,18 +97,7 @@ void readSwitchStates(){
     readSwitchState(1 - digitalRead(gpio4), &switchState[4], &debounceTimes[4]);
 }
 
-struct rgb{
-    bool red;
-    bool green;
-    bool blue;
-};
 
-struct led{
-    int *red;
-    int *blue;
-    int *green;
-    int *power;
-};
 
 void turnOffAll(){
     digitalWrite(p0, LOW);
@@ -101,23 +113,26 @@ void turnOffAll(){
     digitalWrite(blue1, HIGH);
 }
 
-void setLED(struct led led, struct rgb color){
+#pragma inline
+void setLED(char red, char blue, char green, char power, char color){
     turnOffAll();
-    digitalWrite(*led.red, 1-color.red);
-    digitalWrite(*led.green, 1-color.green);
-    digitalWrite(*led.blue, 1-color.blue);
-    digitalWrite(*led.power, HIGH);
+    int r = (color & 0b100)>>2;
+    int g = (color & 0b010)>>1;
+    int b = color & 0b001;
+    digitalWrite(red, 1-r);
+    digitalWrite(green, 1-g);
+    digitalWrite(blue, 1-b);
+    digitalWrite(power, HIGH);
     delay(1);
 }
 
-led led0 = {&red1, &blue1, &green1, &p0};
-led led1 = {&red2, &blue2, &green2, &p1};
-led led2 = {&red1, &blue1, &green1, &p1};
-led led3 = {&red2, &blue2, &green2, &p2};
-led led4 = {&red1, &blue1, &green1, &p2};
-
-
+const char *uri = "na";
+const char *device_name = "FH";
+int setups = 0;
 void setup() {
+    acuator_count = 0;
+    cc.begin();
+
     pinMode(red1, OUTPUT);
     pinMode(red2, OUTPUT);
     pinMode(green1, OUTPUT);
@@ -137,54 +152,90 @@ void setup() {
     pinMode(gpio4, INPUT);
     analogReference(INTERNAL);
 
+    if (setups++ > 0){
+      setLED(led1, RED);
+      return;
+    }
+    setLED(led1, GREEN);
+    setLED(led0, YELLOW);
     
-    cc.begin();
+    setLED(led1, RED);
+    delay(100);
+    setLED(led1, GREEN);
 
-    const char *uri = "https://github.com/Chris-Nicholls/firehawk-chip-controller";
-    cc_device_t *device = cc.newDevice("Firehawk", uri);
+    delay(100);
+    setLED(led0, RED);
+    delay(100);
+    setLED(led3, GREEN);
+    delay(100);
+    setLED(led4, GREEN);
+    delay(100);
 
-    cc.addActuator(device, getActuatorConfig("Button-0", &switchState[0])); 
-    cc.addActuator(device, getActuatorConfig("Button-1", &switchState[1])); 
-    cc.addActuator(device, getActuatorConfig("Button-2", &switchState[2])); 
-    cc.addActuator(device, getActuatorConfig("Button-3", &switchState[3])); 
-    cc.addActuator(device, getActuatorConfig("Button-4", &switchState[4])); 
-    cc.addActuator(device, getActuatorConfig("Button-5", &switchState[5])); 
+    setLED(led0, PINK);
 
-    cc.setEventCallback(CC_EV_UPDATE, updateValues);
+
+
+   cc_device_t *device = cc.newDevice(device_name, uri);
+
+   cc.addActuator(device, getActuatorConfig("0", &switchState[0])); 
+   cc.addActuator(device, getActuatorConfig("1", &switchState[1])); 
+   cc.addActuator(device, getActuatorConfig("2", &switchState[2])); 
+   cc.addActuator(device, getActuatorConfig("3", &switchState[3])); 
+   cc.addActuator(device, getActuatorConfig("4", &switchState[4]));   
+   //cc.addActuator(device, getActuatorConfig("5", &switchState[5])); 
+
+   cc.setEventCallback(CC_EV_UPDATE, updateValues);
+   cc.setEventCallback(CC_EV_ASSIGNMENT, updateValues);
+
+   
+    setLED(led4, BLUE);
+    delay(100);
+    setLED(led3, BLUE);
+    delay(100);
+    setLED(led2, BLUE);
+    delay(100);
+    setLED(led1, BLUE);
+    delay(100);
+    setLED(led0, BLUE);
 }
 
 void updateValues(cc_assignment_t *assignment){
+  if (! assignment) return;
   if (! (assignment->mode & CC_MODE_TOGGLE)) return; 
 
-  if (assignment->actuator_id < 6){
+  if (assignment->actuator_id >= 0 &&  assignment->actuator_id < 6){
     ccState[assignment->actuator_id] = assignment->value;
   }
 }
 
-rgb red = rgb{1,0,0};
-rgb blue = rgb{0,0,1};
-rgb green = rgb{0,1,0};
-rgb yellow = rgb{1,1,0};
-rgb pink = rgb{1,0,1};
-rgb cyan = rgb{0,1,1};
-
-rgb off = rgb{0,0,0};
-
-
-
-
-
 void setLEDS(){
-    setLED(led0, ccState[0]==0? blue: green);
-    setLED(led1, ccState[1]==0? blue: red);
-    setLED(led2, ccState[2]==0? blue: yellow);
-    setLED(led3, ccState[3]==0? blue: pink);
-    setLED(led4, ccState[4]==0? blue: cyan);
+    setLED(led0, ccState[0]==0? BLUE: GREEN);
+    setLED(led1, ccState[1]==0? BLUE: RED);
+    setLED(led2, ccState[2]==0? BLUE: YELLOW);
+    setLED(led3, ccState[3]==0? BLUE: PINK);
+    setLED(led4, ccState[4]==0? BLUE: CYAN);
 }
 
 
+int loop_count = 0;
 void loop() {
+    turnOffAll();
     readSwitchStates();
-    setLEDS();
-    cc.run();    
+    if (loop_count > 20){
+        setLEDS();
+
+        cc.run();  
+
+    }else{
+      loop_count++;
+      setLED(led0, ccState[0]==0? BLUE: GREEN);
+      delay(200);
+      ccState[0] = 1 - ccState[0];
+    }
+    if (loop_count < 0){
+      setLED(led4, RED);
+      setLED(led3, RED);
+      setLED(led2, RED);
+      delay(1000);
+    }
 }
