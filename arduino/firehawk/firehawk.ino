@@ -1,9 +1,9 @@
 #include <MIDI.h>
-MIDI_CREATE_DEFAULT_INSTANCE();
 
 #define CONTROL_CHANNEL 1
 #define SWITCH_DELAY 1
 #define DEBOUNCE_REPEATS 1
+#define ANALOG_DEBOUNCE_REPEATS 100
 
 #define RED 0b100
 #define BLUE 0b001
@@ -19,6 +19,11 @@ MIDI_CREATE_DEFAULT_INSTANCE();
 #define led3 red2, blue2, green2, p2
 #define led4 red1, blue1, green1, p2
 
+#define ANALOGUE_BASE 14
+
+MIDI_CREATE_DEFAULT_INSTANCE();
+
+
 
 #define red1 3
 unsigned char green1 = 4, blue1 = 5;
@@ -31,11 +36,35 @@ unsigned char gpio3 = 9, gpio4 = 10;
 
 int acuator_count = 0;
 
-
+char analogueState[] = {0,0,0,0,0,0,0};
 float switchState[] = {0,0,0,0,0,0};
 float ccState[] = {0,0,0,0,0,0};
 
 char debounceTimes[] = {0,0,0,0,0,0};
+char analogDebounceTimes[] = {0,0,0,0,0,0,0};
+
+void readAndSendAnalogue(){
+  for (int i = 0; i < 7; i++){
+    float readIn = analogRead(ANALOGUE_BASE + i);
+    float newState = readIn;
+
+    char newValue = newState/1024 * 127;
+    char currentValue = analogueState[i];
+    if (newValue != currentValue){
+      analogDebounceTimes[i]++;
+      if (analogDebounceTimes[i] > ANALOG_DEBOUNCE_REPEATS){
+        analogueState[i] = newValue;
+        MIDI.sendControlChange(i + 10, newValue , CONTROL_CHANNEL);
+//        Serial.print(i);
+//        Serial.print(": ");
+//        Serial.print(newValue, DEC);
+//        Serial.print("\n");
+      }
+    }else{
+      analogDebounceTimes[i] = 0;
+    }
+  } 
+}
 
 
 float readSwitchState(unsigned char gpio_pin, int switch_index){
@@ -118,6 +147,8 @@ void setLED(char red, char blue, char green, char power, char color){
 }
 
 void setup() {
+    MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to all incoming messages
+//    Serial.begin(9600);
 
     pinMode(red1, OUTPUT);
     pinMode(red2, OUTPUT);
@@ -136,7 +167,13 @@ void setup() {
 
     pinMode(gpio3, INPUT);
     pinMode(gpio4, INPUT);
-    analogReference(INTERNAL);
+
+//    pinMode(ANALOGUE_BASE, INPUT);
+//    pinMode(ANALOGUE_BASE+1, INPUT);
+//    pinMode(ANALOGUE_BASE+2, INPUT);
+//    pinMode(ANALOGUE_BASE+3, INPUT);
+//    pinMode(ANALOGUE_BASE+4, INPUT);
+//    pinMode(ANALOGUE_BASE+5, INPUT);
 
   
     setLED(led1, GREEN);
@@ -155,7 +192,7 @@ void setup() {
     delay(100);
 
     setLED(led0, PINK);
-         MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to all incoming messages
+    // MIDI.begin(MIDI_CHANNEL_OMNI);  // Listen to all incoming messages
 }
 
 
@@ -172,6 +209,6 @@ int loop_count = 0;
 void loop() {
     turnOffAll();
     readSwitchStates();
+    readAndSendAnalogue();
     setLEDS();
-//    delay(10); 
 }
